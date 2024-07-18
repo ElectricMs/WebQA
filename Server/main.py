@@ -4,6 +4,7 @@ from fastapi import Request
 from starlette.responses import JSONResponse
 
 from RAGModel import RAGModel
+from source import options, generator, idregister
 
 app = FastAPI()
 
@@ -38,6 +39,37 @@ async def ask_question(request: Request):
 
     except Exception as e:
         print(f"An exception occurred: {e}")
+
+
+@app.get("/id")
+async def get_id():
+    global uid
+    try:
+        # 连接redis
+        # register = idregister.Register(host="127.0.0.1", port=6379)
+
+        # 获取worker id
+        # worker_id = register.get_worker_id()
+
+        # 生成id generator
+        option = options.IdGeneratorOptions(worker_id=23, seq_bit_length=10)
+        option.base_time = 12311111112
+        idgen = generator.DefaultIdGenerator()
+        idgen.set_id_generator(option)
+
+        uid = idgen.next_id()
+
+        #print(worker_id)
+        print(uid)
+        print(option.__dict__)
+
+        # 退出注册器线程
+        #register.stop()
+
+    except ValueError as e:
+        print(e)
+        return JSONResponse({'error': {e}}, status_code=200)
+    return JSONResponse({'uid': uid}, status_code=400)
 
 
 # 当这个脚本作为主程序运行时，这段代码将启动 uvicorn 服务器。
