@@ -1,0 +1,5 @@
+#忽略models下的嵌入模型m3e-base-huggingface 运行时需要手动添加
+m3e-base-huggingface/
+
+#忽略环境变量
+*.env
