@@ -65,7 +65,7 @@ async def stream(request: Request):
             start_stream: bool = False
             print("===============================")
             async for chunk in model.agent_executor.astream_events(
-                    input="hello", version="v2", include_names="ChatZhipuAI"
+                    input={"input":question}, version="v2", include_names="ChatZhipuAI"
             ):
                 # chunks.append(chunk)
                 # print("-----------------------")
@@ -92,7 +92,7 @@ async def stream(request: Request):
                             if "Final" in content:
                                 start_final = True
 
-                            if (start_final) and ":" in content:
+                            if start_final and ":" in content:
                                 start_stream = True
 
             json_data = json.dumps({"message": 'done'})
