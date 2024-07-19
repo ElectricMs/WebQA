@@ -2,10 +2,23 @@
   <div class="home">
     <div class="home-left">
       <div class="nev">
-       <button style="width: 50px;" @click="bye">历史记录1</button>
+       <button style="width: 50px;" @click="bye">bey</button>
        <br>
        <h4 class="text">历史记录</h4>
-       <el-tag class="history" 
+       <div class="ul_his">
+        <ul>
+          <li class="history" 
+          v-for="tag in tags"  
+          :key="tag.id"
+          @click="history(tag)">
+            {{tag.name}}
+            <button class="delbutton" @click="deletehistory(tag)">
+              <img src="../assets/删除.svg" alt="删除">
+            </button>
+          </li>
+        </ul>
+      </div>
+       <!-- <el-tag class="history" 
        effect="plain" 
        v-for="tag in tags" 
        :key="tag.name" 
@@ -13,7 +26,7 @@
        :type="tag.type"
        @click="history1">
           {{tag.name}}
-       </el-tag>
+       </el-tag> -->
 
       </div>
       <comic></comic>
@@ -89,9 +102,12 @@ export default {
           .use(markdownItHighlightjs, {hljs}), // 添加 markdown-it-highlightjs 插件
       
       tags: [
-          { name: '标签一',  },
-          { name: '标签二',  },
-         
+          { name: ' ', id:1 , his : "chatHistory1"},
+          { name: ' ', id:2 , his : "chatHistory2"},
+          { name: ' ', id:3 , his : "chatHistory3"},
+          // { name: '', id:2 },
+          // { name: '', id:3 },
+          // { name: '', id:2 },
       ],
       // 存储用户输入
       queryKeyword: '',  
@@ -101,7 +117,10 @@ export default {
       socket: null,
       eventSource: null, // 添加事件源变量
       stopIcon: '../assets/等待.png',
-      uploadIcon: '../assets/上传.png'
+      uploadIcon: '../assets/上传.png',
+
+      //选择历史记录
+      his_choose:'',
     }
   },
   methods: {
@@ -112,28 +131,34 @@ export default {
       this.tags.splice(this.tags.indexOf(tag), 1);
     },
 
-    history1(){
-      const chatHistory = localStorage.getItem('chatHistory');
+    history(tag){
+      this.his_choose = tag.his 
+      console.log(this.his_choose)
+      const chatHistory = localStorage.getItem(this.his_choose);
       console.log(chatHistory)
-      if (chatHistory) {
-        this.messages = JSON.parse(chatHistory);
-        console.log(this.messages);
-        for (let i = 0,j = 0; i < this.messages.length; i++) {
-          if (this.messages[i].sender === 'User') {
-            this.tags[j].name += this.messages[i].content
-          }
-        }
-        console.log(this.tags)
-      }
+      
+      this.messages = JSON.parse(chatHistory);
+      console.log(this.messages);
+      
+
     },
-    history2(){
-      const chatHistory1 = localStorage.getItem('chatHistory1');
-      console.log(chatHistory1)
-      if (chatHistory1) {
-        this.messages = JSON.parse(chatHistory1);
-        console.log(this.messages);
-      }
-    },
+    // history2(){
+    //   const chatHistory1 = localStorage.getItem(this.his_choose);
+    //   console.log(chatHistory1)
+    //   if (chatHistory1) {
+    //     this.messages = JSON.parse(chatHistory1);
+    //     console.log(this.messages);
+    //   }
+    // },
+    // history3(){
+    //   const chatHistory1 = localStorage.getItem('chatHistory2');
+    //   console.log(chatHistory1)
+    //   if (chatHistory1) {
+    //     this.messages = JSON.parse(chatHistory1);
+    //     console.log(this.messages);
+    //   }
+    // },
+
     async handleSearch() {
       // 如果正在加载中，则不执行新的搜索操作
       if (this.loading) {
@@ -221,11 +246,34 @@ export default {
       }
     },
   },
+
+  mounted() {
+    for (let tag = 0; tag<this.tags.length; tag++){
+      const chatHistory = localStorage.getItem(this.tags[tag].his);
+      console.log(chatHistory)
+      if (chatHistory) {
+        this.messages = JSON.parse(chatHistory);
+        console.log(this.messages);
+        for (let i = 0; i < this.messages.length; i++) {
+          if (this.messages[i].sender === 'User') {
+            this.tags[tag].name += this.messages[i].content
+          }
+        }
+        console.log(this.tags)
+    }
+    }
+   
+  },
+  updated() {
+      // console.log(this.messages)
+      // localStorage.setItem('chatHistory', JSON.stringify(this.messages));
+      // console.log(localStorage.getItem('chatHistory'));
+      //localStorage.clear();
+  },
   beforeDestroy() {
       console.log(this.messages)
-      localStorage.setItem('chatHistory', JSON.stringify(this.messages));
-      console.log(localStorage.getItem('chatHistory'));
-      // localStorage.removeItem('chatHistory');
+      localStorage.setItem(this.his_choose, JSON.stringify(this.messages));
+      console.log(localStorage.getItem(this.his_choose));
       if (this.eventSource) {
         this.eventSource.close();
       }
@@ -258,9 +306,10 @@ export default {
 }
 
 .nev{
-  width: 80%;
+  width: 85%;
   height:60%;
   margin-left: 30px;
+
 }
 
 .text{
@@ -268,18 +317,42 @@ export default {
   font-size: large;
 }
 
-.history {
+.ul_his{
   width: 100%;
-  height: 15%;
+  height: 100%;
+  overflow-y: auto; /* 添加垂直滚动条 */
+}
+
+.history {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 75px;
   background-color: rgba(205, 214, 213, 0.326);
   font-family: 'Chat';
   font-size:15px;
+  word-wrap: break-word;
   margin-bottom: 10px;
   border: #f4fdb8;
   border-radius: 5px;
   overflow: hidden;
+  text-overflow: ellipsis; /* 添加省略号 */
+  letter-spacing: 2px;
 }
 
+.history:hover{
+  background-color: rgba(206, 240, 255, 0.326);
+}
+.delbutton{
+  border: 0ch;
+  position: absolute;
+  right: 0% ;
+  bottom: 0%;
+}
+
+.delbutton:hover{
+  background-color: rgba(205, 214, 213, 0.326);
+}
 .home-right {
   width: 80%;
 }
