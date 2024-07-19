@@ -1,24 +1,73 @@
 from RAGModel import RAGModel
 
-from langchain.agents import AgentExecutor, LLMSingleActionAgent, AgentOutputParser
+from langchain.agents import AgentExecutor, AgentOutputParser
 from langchain.memory import ConversationBufferMemory
-from langchain import LLMChain
 from langchain.schema import AgentAction, AgentFinish
 from typing import Union
 import re
 import time
-import asyncio
+from langchain.agents import create_structured_chat_agent
+from langchain import hub
 
 class SingleAgent(RAGModel):
     def __init__(self):
 
         start_time = time.time()
-        self.prompt = RAGModel.CustomPromptTemplate(
-            template=RAGModel.template,
-            tools=RAGModel.tools,
-            # This omits the `agent_scratchpad`, `tools`, and `tool_names` variables because those are generated dynamically
-            # This includes the `intermediate_steps` variable because that is needed
-            input_variables=["input", "intermediate_steps", "chat_history"]
+
+        from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+
+        system = '''Respond to the human as helpfully and accurately as possible. You have access to the following tools:
+
+                    {tools}
+
+                    Use a json blob to specify a tool by providing an action key (tool name) and an action_input key (tool input).
+
+                    Valid "action" values: "Final Answer" or {tool_names}
+
+                    Provide only ONE action per $JSON_BLOB, as shown:
+
+                    ```
+                    {{
+                      "action": $TOOL_NAME,
+                      "action_input": $INPUT
+                    }}
+                    ```
+
+                    Follow this format:
+
+                    Question: input question to answer
+                    Thought: consider previous and subsequent steps
+                    Action:
+                    ```
+                    $JSON_BLOB
+                    ```
+                    Observation: action result
+                    ... (repeat Thought/Action/Observation N times)
+                    Thought: I know what to respond
+                    Action:
+                    ```
+                    {{
+                      "action": "Final Answer",
+                      "action_input": "Final response to human"
+                    }}
+
+                    Begin! Reminder to ALWAYS respond with a valid json blob of a single action. Use tools if necessary. Respond directly if appropriate. Format is Action:```$JSON_BLOB```then Observation'''
+
+        human = '''Previous conversation history:
+                    {chat_history}
+                    
+                    {input}
+
+                    {agent_scratchpad}
+
+                    (reminder to respond in a JSON blob no matter what)'''
+
+        self.prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", system),
+                #MessagesPlaceholder("chat_history", optional=True),
+                ("human", human),
+            ]
         )
 
         class CustomOutputParser(AgentOutputParser):
@@ -46,27 +95,26 @@ class SingleAgent(RAGModel):
 
         self.output_parser = CustomOutputParser()
 
-        # LLM chain consisting of the LLM and a prompt
-        self.llm_chain = LLMChain(llm=RAGModel.chat_model, prompt=self.prompt)
-
-        tool_names = [tool.name for tool in RAGModel.tools]
-
-        self.agent = LLMSingleActionAgent(
-            llm_chain=self.llm_chain,
-            output_parser=self.output_parser,
-            stop=["\nObservation:", "\n\nObservation"],
-            allowed_tools=tool_names
+        self.agent = create_structured_chat_agent(
+            llm=RAGModel.chat_model,
+            tools=RAGModel.tools,
+            prompt=self.prompt,
+            #prompt=hub.pull("stepbystep/conversational-agent"),
         )
+
         # 多轮对话
         self.memory = ConversationBufferMemory(memory_key="chat_history")
-        self.agent_executor = AgentExecutor.from_agent_and_tools(agent=self.agent, tools=RAGModel.tools, verbose=True,
-                                                                 memory=self.memory)
+        self.agent_executor = AgentExecutor.from_agent_and_tools(
+            agent=self.agent,
+            tools=RAGModel.tools,
+            memory=self.memory,
+            verbose=True,
+            handle_parsing_errors=True,
+        )
 
         end_time = time.time()
         print("Done", "(", end_time - start_time, "s)!")
 
     def generate_answer(self, question):
-        return self.agent_executor.invoke(question)
+        return self.agent_executor.invoke({"input": question})
 
-    def stream_answer(self, question):
-        return self.agent_executor.invoke(question)
