@@ -1,3 +1,5 @@
+from langchain_core.messages import HumanMessage, AIMessage
+
 from RAGModel import RAGModel
 
 from langchain.agents import AgentExecutor, AgentOutputParser
@@ -14,6 +16,8 @@ class SingleAgent(RAGModel):
     def __init__(self):
 
         start_time = time.time()
+
+        self.chat_history = []
 
         from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
@@ -54,10 +58,7 @@ class SingleAgent(RAGModel):
 
                     Begin! Reminder to ALWAYS respond with a valid json blob of a single action. Use tools if necessary. Respond directly if appropriate. Format is Action:```$JSON_BLOB```then Observation'''
 
-        human = '''Previous conversation history:
-                    {chat_history}
-                    
-                    {input}
+        human = '''{input}
 
                     {agent_scratchpad}
 
@@ -66,7 +67,7 @@ class SingleAgent(RAGModel):
         self.prompt = ChatPromptTemplate.from_messages(
             [
                 ("system", system),
-                # MessagesPlaceholder("chat_history", optional=True),
+                MessagesPlaceholder("chat_history", optional=True),
                 ("human", human),
             ]
         )
@@ -104,11 +105,11 @@ class SingleAgent(RAGModel):
         )
 
         # 多轮对话
-        self.memory = ConversationBufferMemory(memory_key="chat_history")
+        # self.memory = ConversationBufferMemory(memory_key="chat_history")
         self.agent_executor = AgentExecutor.from_agent_and_tools(
             agent=self.agent,
             tools=RAGModel.tools,
-            memory=self.memory,
+            # memory=self.memory,
             verbose=True,
             handle_parsing_errors=True,
         )
@@ -117,4 +118,8 @@ class SingleAgent(RAGModel):
         print("SingleAgent Init Done", "(", end_time - start_time, "s)!")
 
     def generate_answer(self, question):
-        return self.agent_executor.invoke({"input": question})
+        response = self.agent_executor.invoke({"input": question,
+                                               'chat_history': self.chat_history})
+        self.chat_history.append(HumanMessage(content=response['input']))
+        self.chat_history.append(AIMessage(content=response['output']))
+        return response['output']
