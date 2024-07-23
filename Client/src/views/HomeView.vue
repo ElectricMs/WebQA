@@ -75,11 +75,10 @@ import markdownItContainer from 'markdown-it-container';
 import hljs from 'highlight.js';
 import markdownItHighlightjs from 'markdown-it-highlightjs';
 import Comic from '@/components/Comic.vue';
-import MyButton from '../components/MyButton.vue';
-      
+
 export default {      
   name: 'HomeView',      
-  components: {Comic,MyButton},      
+  components: {Comic},      
   computed: {      
     // 将 Markdown 文本渲染为 HTML      
     html() {      
