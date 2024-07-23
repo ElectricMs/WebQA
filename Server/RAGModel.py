@@ -24,14 +24,24 @@ class RAGModel:
         api_key="7bdc9df887559945f7c508bd61d0ed57.oexUZRGMwfxQbeQ5",
     )
     chat_model = zhipu_chat_model
+    print("successfully loaded zhipu chat model")
 
-    # 加载网页内容
-    web_loader = WebBaseLoader(
-        web_path="https://baike.baidu.com/item/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BB%84%E6%88%90/9237940")
-    web_docs = web_loader.load()
+    if 0:
+        # 加载网页内容
+        web_loader = WebBaseLoader(
+            web_path="https://baike.baidu.com/item/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BB%84%E6%88%90/9237940")
+        web_docs = web_loader.load()
 
-    docs = web_docs
+        docs = web_docs
+        # embedding
 
+        from langchain_text_splitters import RecursiveCharacterTextSplitter
+        # 生成分词/切分器
+        text_splitter = RecursiveCharacterTextSplitter()
+        # 对load进来的文档进行分词/切分
+        documents = text_splitter.split_documents(documents=docs)
+
+    from langchain_community.vectorstores import FAISS
     EMBEDDING_DEVICE = "cuda"  # 设置嵌入设备的类型为GPU
     embeddings = HuggingFaceEmbeddings(
         model_name="models/m3e-base-huggingface",  # 指定使用的模型名称
@@ -39,15 +49,10 @@ class RAGModel:
         show_progress=True,  # 显示进度条
     )
 
-    from langchain_text_splitters import RecursiveCharacterTextSplitter
-    # 生成分词/切分器
-    text_splitter = RecursiveCharacterTextSplitter()
-    # 对load进来的文档进行分词/切分
-    documents = text_splitter.split_documents(documents=docs)
-
-    from langchain_community.vectorstores import FAISS
-
-    vector = FAISS.from_documents(documents=documents, embedding=embeddings)
+    # vector = FAISS.from_documents(documents=documents, embedding=embeddings)
+    print("start loading vector...")
+    vector = FAISS.load_local("./vectors_bin", embeddings, allow_dangerous_deserialization=True)
+    print(vector)
 
     # 创建一个向量检索器实例
     retriever = vector.as_retriever()
@@ -55,11 +60,11 @@ class RAGModel:
     # 创建检索工具
     retriever_tool = create_retriever_tool(
         retriever=retriever,
-        name="Principles of Computer Organization_retriever",
-        description="搜索有关计算机组成原理概要的信息，可能不包含精确的信息",
+        name="Tianjin_retriever",
+        description="搜索有关天津的信息",
     )
 
-    # 加载工具
+    # 加载工具 此搜索工具不稳定 考虑移除
     search = SerpAPIWrapper()
 
     tools = [Tool(

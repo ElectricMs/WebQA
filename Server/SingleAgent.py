@@ -9,6 +9,7 @@ import time
 from langchain.agents import create_structured_chat_agent
 from langchain import hub
 
+
 class SingleAgent(RAGModel):
     def __init__(self):
 
@@ -65,7 +66,7 @@ class SingleAgent(RAGModel):
         self.prompt = ChatPromptTemplate.from_messages(
             [
                 ("system", system),
-                #MessagesPlaceholder("chat_history", optional=True),
+                # MessagesPlaceholder("chat_history", optional=True),
                 ("human", human),
             ]
         )
@@ -99,7 +100,7 @@ class SingleAgent(RAGModel):
             llm=RAGModel.chat_model,
             tools=RAGModel.tools,
             prompt=self.prompt,
-            #prompt=hub.pull("stepbystep/conversational-agent"),
+            # prompt=hub.pull("stepbystep/conversational-agent"),
         )
 
         # 多轮对话
@@ -113,8 +114,7 @@ class SingleAgent(RAGModel):
         )
 
         end_time = time.time()
-        print("Done", "(", end_time - start_time, "s)!")
+        print("SingleAgent Init Done", "(", end_time - start_time, "s)!")
 
     def generate_answer(self, question):
         return self.agent_executor.invoke({"input": question})
-

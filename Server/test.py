@@ -4,8 +4,6 @@ from langchain_core.messages import AIMessageChunk
 
 from source import options, generator, idregister
 
-
-
 from SingleAgent import SingleAgent
 
 model = SingleAgent()
@@ -44,22 +42,29 @@ async def main():
                         start_stream = True
 
 
-asyncio.run(main())
+import torch
+
+if torch.cuda.is_available():
+    print("CUDA is available")
+else:
+    print("CUDA is not available")
+
+# asyncio.run(main())
 
 # model.agent_executor.stream({"input": "你好"})
 # model.agent_executor.astream_events({"input": "你好"})
 
-#answer = model.agent_executor.invoke({"input": "How many people live in canada?"})
-#print(answer)
+# answer = model.agent_executor.invoke({"input": "How many people live in canada?"})
+# print(answer)
 
-#print(model.agent_executor.memory.buffer)
-
-
-#answer = model.agent_executor.invoke({"input": "what is their national anthem called?"})
+# print(model.agent_executor.memory.buffer)
 
 
-#print(answer)
+# answer = model.agent_executor.invoke({"input": "what is their national anthem called?"})
 
-#print(model.agent_executor.memory.buffer)
-#answer = model.agent_executor.invoke({"input": "what is their national anthem called?"})
-#print(answer)
+
+# print(answer)
+
+# print(model.agent_executor.memory.buffer)
+# answer = model.agent_executor.invoke({"input": "what is their national anthem called?"})
+# print(answer)
