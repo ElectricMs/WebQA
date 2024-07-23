@@ -9,16 +9,19 @@ from langchain_community.utilities import SerpAPIWrapper
 import time
 
 
-
 class RAGModel:
     # Static
     start_time = time.time()
 
     load_dotenv()
+    import os
+    # zhipuai
+    os.environ["ZHIPUAI_API_KEY"] = "7bdc9df887559945f7c508bd61d0ed57.oexUZRGMwfxQbeQ5"
 
     zhipu_chat_model = ChatZhipuAI(
         temperature=0.2,
         streaming=True,
+        api_key="7bdc9df887559945f7c508bd61d0ed57.oexUZRGMwfxQbeQ5",
     )
     chat_model = zhipu_chat_model
 

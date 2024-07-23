@@ -7,6 +7,7 @@ from starlette.responses import JSONResponse, StreamingResponse
 
 from SingleAgent import SingleAgent
 from source import options, generator, idregister
+# 初始化 AKs&SKs
 
 app = FastAPI()
 
@@ -146,5 +147,5 @@ async def get_id():
 # 当这个脚本作为主程序运行时，这段代码将启动 uvicorn 服务器。
 # "fastapi:app" 指定了模块名和实例名
 if __name__ == "__main__":
-    uvicorn.run("1fastapi:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("1fastapi:app", host="127.0.0.1", port=5000, reload=True)
     # 想在这里进行一些初始化操作
