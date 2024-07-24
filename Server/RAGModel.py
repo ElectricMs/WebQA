@@ -14,32 +14,18 @@ class RAGModel:
     start_time = time.time()
 
     load_dotenv()
-    import os
+    # import os
     # zhipuai
-    os.environ["ZHIPUAI_API_KEY"] = "7bdc9df887559945f7c508bd61d0ed57.oexUZRGMwfxQbeQ5"
+    # os.environ["ZHIPUAI_API_KEY"] = "7bdc9df887559945f7c508bd61d0ed57.oexUZRGMwfxQbeQ5"
 
     zhipu_chat_model = ChatZhipuAI(
         temperature=0.2,
         streaming=True,
-        api_key="7bdc9df887559945f7c508bd61d0ed57.oexUZRGMwfxQbeQ5",
+        # api_key="7bdc9df887559945f7c508bd61d0ed57.oexUZRGMwfxQbeQ5",
     )
     chat_model = zhipu_chat_model
     print("successfully loaded zhipu chat model")
 
-    if 0:
-        # 加载网页内容
-        web_loader = WebBaseLoader(
-            web_path="https://baike.baidu.com/item/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BB%84%E6%88%90/9237940")
-        web_docs = web_loader.load()
-
-        docs = web_docs
-        # embedding
-
-        from langchain_text_splitters import RecursiveCharacterTextSplitter
-        # 生成分词/切分器
-        text_splitter = RecursiveCharacterTextSplitter()
-        # 对load进来的文档进行分词/切分
-        documents = text_splitter.split_documents(documents=docs)
 
     from langchain_community.vectorstores import FAISS
     EMBEDDING_DEVICE = "cuda"  # 设置嵌入设备的类型为GPU
