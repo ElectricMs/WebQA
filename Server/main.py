@@ -4,14 +4,43 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn  # web server 一个轻量级的 ASGI 服务器，用于运行 FastAPI 应用。
 from fastapi import Request
 from langchain_core.messages import AIMessageChunk
+from langchain_core.runnables import Runnable
 from starlette.responses import JSONResponse, StreamingResponse
 from langchain_core.messages import HumanMessage, AIMessage
 from RetrievalChain import DocumentRetriever, RetrievalChain
 from typing import List, Dict, Any
+from contextlib import asynccontextmanager
 # from SingleAgent import SingleAgent
-# from source import options, generator, idregister
+from source import options, generator, idregister
 
-app = FastAPI()
+# model: SingleAgent
+document_retriever: DocumentRetriever
+new_retriever_chain: RetrievalChain
+retrieval_chain: Runnable
+chat_history: List[Any]
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Load the ML model
+    # global: model
+    global document_retriever
+    global new_retriever_chain
+    global retrieval_chain
+    global chat_history
+    print("lifespan: loading...")
+    # 这样的话没法多线程，理论上应该在创建新连接时对于每个新连接创建新model
+    # model = SingleAgent()
+    document_retriever = DocumentRetriever()
+    new_retriever_chain = RetrievalChain(document_retriever)
+    retrieval_chain = new_retriever_chain.chat()
+    chat_history = []
+    yield
+    # Clean up the ML models and release the resources
+    print("lifespan:stopping...")
+
+
+app = FastAPI(lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # 替换为你的客户端域名
@@ -21,22 +50,9 @@ app.add_middleware(
 )
 
 
-# 这样的话没法多线程，理论上应该在创建新连接时对于每个新连接创建新model
-#model = SingleAgent()
-document_retriever = DocumentRetriever()
-new_retriever_chain = RetrievalChain(document_retriever)
-retrieval_chain = new_retriever_chain.chat()
-chat_history: List[Any] = []
-
-
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
-
-
-@app.get("/hello/{name}")
-async def say_hello(name: str):
-    return {"message": f"Hello {name}"}
 
 
 # 前端应该要传给后端question和自身id，apikey，id用于确定询问者身份和对话编号（比如一个人可以开启多个对话），apikey用于验证是否有权限对话
@@ -117,7 +133,7 @@ async def stream(query: str = "你是谁"):
             start_stream: bool = False
             print("===============================")
             async for chunk in model.agent_executor.astream_events(
-                    input={"input":question}, version="v2", include_names="ChatZhipuAI"
+                    input={"input": question}, version="v2", include_names="ChatZhipuAI"
             ):
                 # chunks.append(chunk)
                 # print("-----------------------")
@@ -166,7 +182,7 @@ async def stream(query: str = "你是谁"):
 
 @app.get("/id")
 async def get_id():
-    global uid
+    uid: int
     try:
         # 连接redis
         # register = idregister.Register(host="127.0.0.1", port=6379)
@@ -196,7 +212,6 @@ async def get_id():
 
 
 # 当这个脚本作为主程序运行时，这段代码将启动 uvicorn 服务器。
-# "fastapi:app" 指定了模块名和实例名
+# "main:app" 指定了模块名和实例名
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=5000, reload=True)
-    # 想在这里进行一些初始化操作

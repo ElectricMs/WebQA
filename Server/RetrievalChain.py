@@ -29,7 +29,7 @@ class DocumentRetriever:
         # print(embeddings)
 
         vector = FAISS.load_local("./vectors_bin", embeddings, allow_dangerous_deserialization=True)
-        print(vector)
+        # print(vector)
 
         # 生成一个基于向量存储的检索器
         self.retriever = vector.as_retriever()
