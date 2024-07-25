@@ -20,7 +20,7 @@ class DocumentRetriever:
             streaming=True,
         )
 
-        EMBEDDING_DEVICE = "cpu"
+        EMBEDDING_DEVICE = "cuda"
         embeddings = HuggingFaceEmbeddings(
             model_name="models/m3e-base-huggingface",  # 指定使用的模型名称
             model_kwargs={"device": EMBEDDING_DEVICE},  # 传递模型参数，指定设备类型
@@ -61,7 +61,7 @@ class RetrievalChain:
                                                                       self.document_retriever.retriever,
                                                                       history_prompt)
         prompt = ChatPromptTemplate.from_messages([
-            ("system", "Answer the user's questions based on the below context:\n\n{context}"),
+            ("system", "You are a Tianjin Bear. A prefesssional assistant to answer questions about Tianjin's food, clothing, housing and transportation. Answer the user's questions based on the below context:\n\n{context}"),
             MessagesPlaceholder(variable_name="chat_history"),
             ("user", "{input}"),
         ])

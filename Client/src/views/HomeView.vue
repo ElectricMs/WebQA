@@ -23,7 +23,7 @@
 
       </div>
       <comic></comic>
-    </div>
+      </div>
     <div class="home-right">
       
       <div class="right-version">
@@ -154,6 +154,7 @@ export default {
       catch(error){
         console.log(error)
       }
+      this.scrollToBottom()
       
     },
 
@@ -188,7 +189,7 @@ export default {
         let BearMessage = sseMessage;
 
         // 创建一个新的 EventSource 实例(每次后端发来消息即可收到)
-        this.eventSource = new EventSource('http://127.0.0.1:5000/chat_stream?query=' + keyword);
+        this.eventSource = new EventSource('http://127.0.0.1:5000/chat?query=' + keyword);
         // 设置消息事件监听器
         this.eventSource.onmessage = (event) => {
           try {
@@ -278,19 +279,15 @@ export default {
    
   },
   updated() {
-    // if (this.tags !== null && this.messages !== null){
-    //   for (let tag = 0; tag<this.tags.length; tag++){
-    //     if (this.messages !== null){
-    //               this.tags[tag].name = '';
-    //               for (let i = 0; i < this.messages.length; i++) {
-    //               if (this.messages[i].sender === 'User') {
-                    
-    //                 this.tags[tag].name += this.messages[i].content
-    //               }
-    //             }
-    //           }
-    //     }
-    //   }
+      console.log(this.messages)
+      localStorage.setItem(this.his_choose, JSON.stringify(this.messages));
+      
+      //存储tags
+      localStorage.setItem('tags', JSON.stringify(this.tags));
+      console.log(localStorage.getItem('tags'));
+
+      //存储num
+      localStorage.setItem('his_num', this.his_num);
   },
   beforeDestroy() {
       console.log(this.messages)
@@ -337,7 +334,7 @@ export default {
 
 .nev{
   width: 85%;
-  height:60%;
+  height:50%;
   margin-left: 30px;
 
 }
@@ -567,18 +564,18 @@ ul > li:first-child {
  transition: all .2s;
  border: none;
  font-weight: 500;
- color: black;
- background-color: rgba(252, 240, 0, 0.993);
+ color: rgb(54, 54, 54);
+ background-color: rgba(159, 239, 255, 0.993);
 }
 
 .btn:hover {
  transform: translateY(-3px);
- box-shadow: 0 10px 20px rgba(156, 155, 151, 0.2);
+ box-shadow: 0 10px 20px rgba(184, 181, 171, 0.2);
 }
 
 .btn:active {
  transform: translateY(-1px);
- box-shadow: 0 5px 10px rgba(179, 167, 167, 0.2);
+ box-shadow: 0 5px 10px rgba(207, 186, 186, 0.2);
 }
 
 .btn::after {
@@ -595,7 +592,7 @@ ul > li:first-child {
 }
 
 .btn::after {
- background-color: #fcffd4;
+ background-color: #c8dedf;
 }
 
 .btn:hover::after {

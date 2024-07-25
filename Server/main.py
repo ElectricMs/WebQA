@@ -1,5 +1,6 @@
 import json
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 import uvicorn  # web server 一个轻量级的 ASGI 服务器，用于运行 FastAPI 应用。
 from fastapi import Request
 from langchain_core.messages import AIMessageChunk
@@ -8,13 +9,20 @@ from langchain_core.messages import HumanMessage, AIMessage
 from RetrievalChain import DocumentRetriever, RetrievalChain
 from typing import List, Dict, Any
 # from SingleAgent import SingleAgent
-from source import options, generator, idregister
-
+# from source import options, generator, idregister
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 替换为你的客户端域名
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # 这样的话没法多线程，理论上应该在创建新连接时对于每个新连接创建新model
-# model = SingleAgent()
+#model = SingleAgent()
 document_retriever = DocumentRetriever()
 new_retriever_chain = RetrievalChain(document_retriever)
 retrieval_chain = new_retriever_chain.chat()
@@ -51,7 +59,7 @@ async def ask_question(request: Request):
 
 
 @app.get("/chat")
-async def retrieval_stream(query: str = "你是谁"):
+def retrieval_stream(query: str = "你是谁"):
     try:
         human_message: str = query
         if not human_message:
