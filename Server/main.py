@@ -75,19 +75,19 @@ async def ask_question(request: Request):
 
 
 @app.get("/chat")
-def retrieval_stream(query: str = "你是谁"):
+async def retrieval_astream(query: str = "你是谁"):
     try:
         human_message: str = query
         if not human_message:
             return JSONResponse({'error': 'No question provided'}, status_code=400)
 
-        def retrieval_predict():
+        async def retrieval_predict():
             ai_message: str = ""
-            response_iter = retrieval_chain.stream({
+            response_iter = retrieval_chain.astream({
                 "chat_history": chat_history,
                 "input": human_message
             })
-            for chunk in response_iter:
+            async for chunk in response_iter:
                 # print(chunk, end='', flush=True)
                 if isinstance(chunk, dict):
                     if 'answer' in chunk:

@@ -61,7 +61,9 @@ class RetrievalChain:
                                                                       self.document_retriever.retriever,
                                                                       history_prompt)
         prompt = ChatPromptTemplate.from_messages([
-            ("system", "You are a Tianjin Bear. A prefesssional assistant to answer questions about Tianjin's food, clothing, housing and transportation. Answer the user's questions based on the below context:\n\n{context}"),
+            ("system", "You are a Tianjin Bear. A professional assistant to answer questions about Tianjin's food, "
+                       "clothing, housing and transportation. Answer the user's questions based on the below "
+                       "context:\n\n{context}"),
             MessagesPlaceholder(variable_name="chat_history"),
             ("user", "{input}"),
         ])
