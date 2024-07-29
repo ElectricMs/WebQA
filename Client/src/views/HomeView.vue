@@ -9,8 +9,8 @@
        <h4 class="text">历史记录</h4>
        <div class="ul_his">
         <ul style="display: flex; flex-direction: column; gap: 10px;">
-          <li class="history" 
-          v-for="tag in tags"  
+          <li class="history"
+          v-for="tag in tags"
           :key="tag.id"
           @click="history(tag)">
             {{tag.name}}
@@ -25,7 +25,7 @@
       <comic></comic>
     </div>
     <div class="home-right">
-      
+
       <div class="right-version">
         <div class="llm-chat-demo">
           <span class="chat-demo">津小熊(您的天津本地生活助手)</span>
@@ -76,16 +76,16 @@ import hljs from 'highlight.js';
 import markdownItHighlightjs from 'markdown-it-highlightjs';
 import Comic from '@/components/Comic.vue';
 
-export default {      
-  name: 'HomeView',      
-  components: {Comic},      
-  computed: {      
-    // 将 Markdown 文本渲染为 HTML      
-    html() {      
-      return this.md.render(this.message);      
-    }      
-  },      
-  data() {      
+export default {
+  name: 'HomeView',
+  components: {Comic},
+  computed: {
+    // 将 Markdown 文本渲染为 HTML
+    html() {
+      return this.md.render(this.message);
+    }
+  },
+  data() {
     return {
       md: new MarkdownIt()
           .use(markdownItFootnote)
@@ -93,7 +93,7 @@ export default {
           .use(markdownItAbbr)
           .use(markdownItContainer, 'warning')
           .use(markdownItHighlightjs, {hljs}), // 添加 markdown-it-highlightjs 插件
-      
+
       tags: [
           { name: ' ', id:1 , his : "chatHistory1"},
           // { name: ' ', id:2 , his : "chatHistory2"},
@@ -103,7 +103,7 @@ export default {
           // { name: '', id:2 },
       ],
       // 存储用户输入
-      queryKeyword: '',  
+      queryKeyword: '',
       tempResult: {},
       loading: false,
       messages: [],
@@ -134,7 +134,7 @@ export default {
     },
 
     history(tag){
-      this.his_choose = tag.his 
+      this.his_choose = tag.his
       console.log(this.his_choose)
       console.log(localStorage.getItem(this.his_choose))
       try{
@@ -142,19 +142,19 @@ export default {
         if (chatHistory === 'null' || chatHistory === null){
           this.messages = [];
           console.log("没有历史记录")
-          
+
         }
         else{
           console.log(chatHistory);
           this.messages = JSON.parse(chatHistory);
 
         }
-        
+
       }
       catch(error){
         console.log(error)
       }
-      
+
     },
 
     async handleSearch() {
@@ -188,7 +188,7 @@ export default {
         let BearMessage = sseMessage;
 
         // 创建一个新的 EventSource 实例(每次后端发来消息即可收到)
-        this.eventSource = new EventSource('http://127.0.0.1:5000/chat_stream?query=' + keyword);
+        this.eventSource = new EventSource('http://127.0.0.1:5000/chat?query=' + keyword);
         // 设置消息事件监听器
         this.eventSource.onmessage = (event) => {
           try {
@@ -201,7 +201,7 @@ export default {
               this.eventSource.close();
               this.loading = false;
             }
-            
+
             if (dataObject.message != 'done') {
               // 累加接收到的数据到 BearMessage.orgcontent 中
               BearMessage.orgcontent += dataObject.message.toLocaleString();
@@ -218,10 +218,10 @@ export default {
 
         this.messages.push(sseMessage);
         this.queryKeyword = ''; // 清空输入框
-        
+
         //历史数据存储
         console.log(this.messages)
-        
+
         this.eventSource.onerror = error => {
           console.error('EventSource failed:', error);
           this.eventSource.close();
@@ -255,7 +255,7 @@ export default {
       for (let tag = 0; tag<this.tags.length; tag++){
         let chatHistory = localStorage.getItem(this.tags[tag].his);
         console.log(chatHistory);
-        
+
         if (chatHistory !== null && chatHistory !== undefined && chatHistory !== 'null') {
           // console.log(chatHistory);
           this.messages = JSON.parse(chatHistory);
@@ -263,11 +263,11 @@ export default {
           if (this.messages !== null){
               this.tags[tag].name = '';
               for (let i = 0; i < this.messages.length; i++) {
-              if (this.messages[i].sender === 'User') {                
+              if (this.messages[i].sender === 'User') {
                 this.tags[tag].name += this.messages[i].content
               }
             }
-          }         
+          }
         }
         else{
           this.messages = [];
@@ -275,7 +275,7 @@ export default {
         }
       }
   }
-   
+
   },
   updated() {
     // if (this.tags !== null && this.messages !== null){
@@ -284,7 +284,7 @@ export default {
     //               this.tags[tag].name = '';
     //               for (let i = 0; i < this.messages.length; i++) {
     //               if (this.messages[i].sender === 'User') {
-                    
+
     //                 this.tags[tag].name += this.messages[i].content
     //               }
     //             }
@@ -295,14 +295,14 @@ export default {
   beforeDestroy() {
       console.log(this.messages)
       localStorage.setItem(this.his_choose, JSON.stringify(this.messages));
-      
+
       //存储tags
       localStorage.setItem('tags', JSON.stringify(this.tags));
       console.log(localStorage.getItem('tags'));
 
       //存储num
       localStorage.setItem('his_num', this.his_num);
-      
+
       if (this.eventSource) {
         this.eventSource.close();
       }
@@ -427,7 +427,7 @@ ul > li:first-child {
   font-family: 'Title',"SimHei", sans-serif;
   font-weight: 600;
   font-size: 20px;
-  opacity: 0.8; 
+  opacity: 0.8;
 }
 
 .right-body {
@@ -505,7 +505,7 @@ ul > li:first-child {
   position: relative;
   right: 3.5%;
   /* color: black !important; */
- 
+
 }
 
 .user-message {

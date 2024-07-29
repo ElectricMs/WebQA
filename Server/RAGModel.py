@@ -26,7 +26,6 @@ class RAGModel:
     chat_model = zhipu_chat_model
     print("successfully loaded zhipu chat model")
 
-
     from langchain_community.vectorstores import FAISS
     EMBEDDING_DEVICE = "cuda"  # 设置嵌入设备的类型为GPU
     embeddings = HuggingFaceEmbeddings(
