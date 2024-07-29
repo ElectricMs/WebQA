@@ -12,6 +12,7 @@ from typing import List, Dict, Any
 from contextlib import asynccontextmanager
 # from SingleAgent import SingleAgent
 from source import options, generator, idregister
+from sql_app.Router import router
 
 # model: SingleAgent
 document_retriever: DocumentRetriever
@@ -48,6 +49,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+# 注册路由
+app.include_router(router)
 
 
 @app.get("/")
