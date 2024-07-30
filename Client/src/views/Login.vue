@@ -73,7 +73,7 @@
 <script>
 import '../css/iconfont.css'
 import Vue from 'vue';
-
+import axios from 'axios';
 export default {
   data() {
     var validatePass2 = (rule, value, callback) => {
@@ -127,15 +127,93 @@ export default {
   },
     //登录
     handleClick2(formName) {
-    this.submitForm(formName);
+    this.submitForm_login(formName);
     this.resetForm(formName);
   },
-    submitForm(formName) {
-      this.$refs[formName].validate((valid) => {
+    submitForm_login(formName){
+      this.$refs[formName].validate(async (valid) => {
         if (valid) {
-          alert('submit!');
+          const email = this.ruleForm.email;
+          const password = this.ruleForm.password;
+          console.log('Email:', email);
+          console.log('Password:', password);
+          try {
+            const newLogin = {
+              account: email,
+              password: password
+            };
+            const response = await axios.post('http://127.0.0.1:5000/login', newLogin);
+            if (response.status === 200) {
+              alert('登录成功!');
+              console.log('User login:', response.data);
+              localStorage.setItem('token',response.data.token)
+              await this.$router.push('/conversation');
+            } else {
+              console.error('Failed to login:', response.status);
+            }
+          }catch(error){
+            if (error.response) {
+          // 请求已发出，服务器响应了状态码
+              alert("账户或密码错误！")
+          console.error('Error response:', error.response.data);
+          // 这里可以根据 error.response.data.detail 显示具体的错误信息
+        } else if (error.request) {
+          // 请求已发出但没有收到响应
+          console.error('No response:', error.request);
         } else {
-          alert('error submit!!');
+          // 发生了触发请求错误的问题
+          console.error('Error:', error.message);
+        }
+          }
+
+
+
+
+        } else {
+          alert('输入的信息格式错误!!');
+          return false;
+        }
+      });
+    },
+    submitForm(formName) {
+      this.$refs[formName].validate(async (valid) => {
+        if (valid) {
+          const email = this.ruleForm.email;
+          const password = this.ruleForm.password;
+          console.log('Email:', email);
+          console.log('Password:', password);
+          try {
+            const newUser = {
+              account: email,
+              password: password
+            };
+            const response = await axios.post('http://127.0.0.1:5000/signup', newUser);
+            if (response.status === 200) {
+              alert('注册成功');
+              console.log('User registered:', response.data);
+            } else {
+              console.error('Failed to register:', response.status);
+            }
+          }catch(error){
+            if (error.response) {
+              // 请求已发出，服务器响应了状态码
+              alert("Account already registered")
+              console.error('Error response:', error.response.data);
+              // 这里可以根据 error.response.data.detail 显示具体的错误信息
+            } else if (error.request) {
+              // 请求已发出但没有收到响应
+              console.error('No response:', error.request);
+            } else {
+              // 发生了触发请求错误的问题
+              console.error('Error:', error.message);
+          }
+          }
+
+
+
+
+        } else {
+          alert('输入的信息格式错误!!');
           return false;
         }
       });
@@ -162,9 +240,7 @@ export default {
       this.bContainer.classList.toggle("is-txl");
       this.bContainer.classList.toggle("is-z");
     },
-    signin() {
-      console.log("yes");
-    },
+
 
   },
   mounted() {
@@ -207,8 +283,8 @@ export default {
             justify-content: center;
             align-items: center;
             font-size: 12px;
-            background-color: #ecf0f3;
-            color: #a0a5a8;
+            background-color: #606568;
+
         }
 
 
@@ -220,7 +296,7 @@ export default {
             height: 600px;
             padding: 25px;
             background-color: #ecf0f3;
-            box-shadow: 10px 10px 10px #d1d9e6, -10px -10px 10px #f9f9f9;
+
             border-radius: 12px;
             overflow: hidden;
         }

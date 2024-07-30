@@ -29,7 +29,7 @@ class DocumentRetriever:
         # print(embeddings)
 
         vector = FAISS.load_local("./vectors_bin", embeddings, allow_dangerous_deserialization=True)
-        print(vector)
+        # print(vector)
 
         # 生成一个基于向量存储的检索器
         self.retriever = vector.as_retriever()
@@ -61,7 +61,9 @@ class RetrievalChain:
                                                                       self.document_retriever.retriever,
                                                                       history_prompt)
         prompt = ChatPromptTemplate.from_messages([
-            ("system", "Answer the user's questions based on the below context:\n\n{context}"),
+            ("system", "You are a Tianjin Bear. A professional assistant to answer questions about Tianjin's food, "
+                       "clothing, housing and transportation. Answer the user's questions based on the below "
+                       "context:\n\n{context}"),
             MessagesPlaceholder(variable_name="chat_history"),
             ("user", "{input}"),
         ])

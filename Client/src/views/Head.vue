@@ -1,13 +1,16 @@
 <template>
+
 <div id="app">
+
+
     <header>
       <img src="../assets/schoolSymbol.png" alt="Logo" class="logo" />
       <h1>软件学院企业实训第八组</h1>
     </header>
     <main>
       <section class="introduction">
-        <h2>天津本地生活助手</h2>
-        <p>立即体验天津本地生活助手，为您提供便捷的本地生活服务。</p>
+        <h2>天津本地智能问答系统</h2>
+        <p>立即体验本地智能问答系统，为您提供便捷的本地生活服务。</p>
       </section>
       <section class="action-buttons">
         <router-link to="/conversation" class="button">立即体验→</router-link>
@@ -16,8 +19,9 @@
     </main>
 
   </div>
+
 </template>
-<script setup>
+<script>
 
 </script>
 
@@ -33,6 +37,19 @@
   margin-top: 20px;
 }
 
+.background {
+
+  position: absolute;
+
+  display: block;
+
+  top: 0;
+
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
 header {
 
   display: flex;

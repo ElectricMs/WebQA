@@ -19,6 +19,7 @@
     "markdown-it-highlightjs": "^4.0.1",
     "markdown-it-task-lists": "^2.1.1",
     "marked": "^12.0.1",
+    "particlesjs": "^2.2.3",
     "socket.io-client": "^4.7.5",
     "vue": "^2.7.16",
     "vue-markdown": "^2.2.4",
