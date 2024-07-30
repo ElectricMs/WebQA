@@ -1,14 +1,15 @@
-from fastapi import Depends, FastAPI, HTTPException
-from sqlalchemy.orm import Session
+from typing import Optional
 
+from fastapi import Depends, FastAPI, HTTPException, Request
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse
 from sql_app import crud, models, schemas
 from sql_app.database import SessionLocal, engine
 from fastapi import APIRouter, Depends
 
-
 router = APIRouter()
-
-
 
 
 # models.Base.metadata.create_all(bind=engine)
@@ -22,6 +23,42 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+ADMIN_TOKEN_PATH = "/_token"
+
+
+class TokenVerificationMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        if request.url.path.startswith(ADMIN_TOKEN_PATH):
+            token = request.headers.get("token")
+            try:
+                # 在这里调用verify_token函数
+                # 注意：不能直接在中间件中使用Depends，因此需要手动获取db会话
+                db = next(get_db())
+                verify_token(token=token, db=db)
+            except HTTPException as e:
+                return JSONResponse(
+                    status_code=e.status_code,
+                    content={"code": e.status_code, "msg": e.detail}
+                )
+
+        response = await call_next(request)
+        return response
+
+
+def verify_token(token: Optional[str] = None, db: Session = Depends(get_db)):
+    if not token:
+        raise HTTPException(status_code=403, detail="请先登录")
+
+    admin_token_sql = text("SELECT * FROM `User` WHERE `token` = :token")
+    result = db.execute(admin_token_sql, {'token': token})
+    admin = result.fetchone()
+
+    if not admin:
+        raise HTTPException(status_code=403, detail="请先登录")
+
+    return admin
 
 
 # 创建账户路由 已测试 会验证账号是否存在 后续需要验证传入的数据结构
@@ -40,7 +77,7 @@ def login_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
 
 # 此路由只测试用
-@router.get("/users/", response_model=list[schemas.User])
+@router.get("/_token/users/", response_model=list[schemas.User])
 def read_users(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     users = crud.get_users(db, skip=skip, limit=limit)
     return users

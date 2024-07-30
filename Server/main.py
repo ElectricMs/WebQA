@@ -1,5 +1,5 @@
 import json
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn  # web server 一个轻量级的 ASGI 服务器，用于运行 FastAPI 应用。
 from fastapi import Request
@@ -8,11 +8,11 @@ from langchain_core.runnables import Runnable
 from starlette.responses import JSONResponse, StreamingResponse
 from langchain_core.messages import HumanMessage, AIMessage
 from RetrievalChain import DocumentRetriever, RetrievalChain
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from contextlib import asynccontextmanager
 # from SingleAgent import SingleAgent
 from source import options, generator, idregister
-from sql_app.Router import router
+from sql_app.Router import router, TokenVerificationMiddleware
 
 # model: SingleAgent
 document_retriever: DocumentRetriever
@@ -51,11 +51,14 @@ app.add_middleware(
 )
 # 注册路由
 app.include_router(router)
-
+# 添加中间件到FastAPI应用
+app.add_middleware(TokenVerificationMiddleware)
 
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
+
+
 
 
 # 前端应该要传给后端question和自身id，apikey，id用于确定询问者身份和对话编号（比如一个人可以开启多个对话），apikey用于验证是否有权限对话
