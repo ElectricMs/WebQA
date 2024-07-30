@@ -7,7 +7,7 @@
 # #SQLAlchemy模型：用于数据库操作，如查询、插入、更新和删除。
 # 它们是数据库操作的基础，允许开发者通过Python类和对象来执行SQL操作。
 # Pydantic模型：用于API的输入验证和输出格式化，确保客户端和服务器之间的数据传输是正确的。
-from typing import Union
+
 
 from pydantic import BaseModel
 
@@ -41,20 +41,8 @@ class UserCreate(UserBase):
 class User(UserBase):
     id: int
     token: str
-    chats: list[Chat] = []
+    # 由于SQLAlchemy的relationship功能失效，在user实例中不存储chat_id，改为通过user_id在Chat表中检索
+    # chats: list[Chat] = []
 
     class Config:
         orm_mode = True
-
-
-
-
-
-
-
-
-
-
-
-
-

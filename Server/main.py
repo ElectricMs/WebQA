@@ -54,11 +54,10 @@ app.include_router(router)
 # 添加中间件到FastAPI应用
 app.add_middleware(TokenVerificationMiddleware)
 
+
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
-
-
 
 
 # 前端应该要传给后端question和自身id，apikey，id用于确定询问者身份和对话编号（比如一个人可以开启多个对话），apikey用于验证是否有权限对话
