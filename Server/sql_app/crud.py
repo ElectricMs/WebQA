@@ -44,7 +44,11 @@ def login(db: Session, user: schemas.UserCreate):
         db.query(models.User).filter(models.User.account == user.account, models.User.password == user.password).update(
             {'token': result.token})
         result.password = ""
-        return result
+        return {"id": result.id,
+                "account": result.account,
+                "password": result.password,
+                "token": result.token,
+                }
     raise HTTPException(status_code=400, detail="Account or password is incorrect")
 
 
@@ -58,7 +62,12 @@ def create_user(db: Session, user: schemas.UserCreate):
     db.commit()
     db.refresh(db_user)
     db_user.password = ""
-    return db_user
+
+    return {"id": db_user.id,
+            "account": db_user.account,
+            "password": db_user.password,
+            "token": db_user.token,
+            }
 
 
 # 查找一个user_id 对应的所有聊天记录chat_id

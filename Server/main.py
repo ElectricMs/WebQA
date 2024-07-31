@@ -64,7 +64,7 @@ middleware = [
         allow_methods=["*"],
         allow_headers=["*"]
     ),
-    Middleware(TokenVerificationMiddleware),
+    # Middleware(TokenVerificationMiddleware),
 ]
 
 app = FastAPI(lifespan=lifespan, middleware=middleware)
@@ -106,6 +106,7 @@ async def retrieval_astream(query: str = "你是谁", chat_model: str = "ZhipuAI
         # 读取历史记录
         if chat_id:
             # 在这里调用函数检索具体历史记录
+
             history = []  # 修改此处，给history赋值
             print("loading chat history")
         else:
