@@ -26,7 +26,7 @@ class Chat(ChatBase):
     # Pydantic orm_mode将告诉 Pydantic模型读取数据，
     # 即它不是一个dict，而是一个 ORM 模型（或任何其他具有属性的任意对象）
     class Config:
-        orm_mode = True  # 设置配置值，而不是声明类型
+        from_attributes = True  # 设置配置值，而不是声明类型
 
 
 class UserBase(BaseModel):
@@ -45,4 +45,4 @@ class User(UserBase):
     # chats: list[Chat] = []
 
     class Config:
-        orm_mode = True
+        from_attributes = True

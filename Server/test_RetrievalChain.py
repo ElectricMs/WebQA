@@ -1,6 +1,6 @@
 from langchain_core.messages import HumanMessage, AIMessage
-from RetrievalChain import DocumentRetriever, RetrievalChain
-from typing import List, Dict, Any
+from chat_models.RetrievalChain import DocumentRetriever, RetrievalChain
+from typing import List, Any
 
 document_retriever = DocumentRetriever()
 new_retriever_chain = RetrievalChain(document_retriever)

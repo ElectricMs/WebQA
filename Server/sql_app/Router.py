@@ -11,8 +11,8 @@ from fastapi import APIRouter, Depends
 
 router = APIRouter()
 
-
-models.Base.metadata.create_all(bind=engine)
+# 如果需要重建表，可删除表后使用下面的语句创建
+# models.Base.metadata.create_all(bind=engine)
 
 
 # Dependency

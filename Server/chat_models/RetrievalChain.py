@@ -1,6 +1,6 @@
 from typing import Dict, List, Any
 from langchain_core.runnables import Runnable
-
+from chat_models.model import Model
 
 class DocumentRetriever:
     def __init__(self):
@@ -39,8 +39,9 @@ class DocumentRetriever:
 
 
 class RetrievalChain:
-    def __init__(self, document_retriever: DocumentRetriever):
+    def __init__(self, document_retriever: DocumentRetriever, model: Model):
         self.document_retriever = document_retriever
+        self.chat_model = model.chat_model
 
     def chat(self) -> Runnable:
         # 链：接受最近的输入+会话历史
@@ -57,7 +58,7 @@ class RetrievalChain:
                      "look up in order to get information relevant to the conversation")
         ])
         # 生成含有历史信息的检索链
-        history_text_retriever_chain = create_history_aware_retriever(self.document_retriever.chat_model,
+        history_text_retriever_chain = create_history_aware_retriever(self.chat_model,  # chat_model
                                                                       self.document_retriever.retriever,
                                                                       history_prompt)
         prompt = ChatPromptTemplate.from_messages([
@@ -68,7 +69,7 @@ class RetrievalChain:
             ("user", "{input}"),
         ])
 
-        document_chain = create_stuff_documents_chain(self.document_retriever.chat_model, prompt)
+        document_chain = create_stuff_documents_chain(self.chat_model, prompt)  # chat_model
         # 最终的检索链
         retrieval_chain = create_retrieval_chain(history_text_retriever_chain, document_chain)
 

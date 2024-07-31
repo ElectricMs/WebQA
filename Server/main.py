@@ -1,24 +1,29 @@
 import json
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn  # web server 一个轻量级的 ASGI 服务器，用于运行 FastAPI 应用。
 from fastapi import Request
 from langchain_core.messages import AIMessageChunk
 from langchain_core.runnables import Runnable
+from starlette.middleware import Middleware
 from starlette.responses import JSONResponse, StreamingResponse
 from langchain_core.messages import HumanMessage, AIMessage
-from RetrievalChain import DocumentRetriever, RetrievalChain
-from typing import List, Dict, Any, Optional
+from chat_models.RetrievalChain import DocumentRetriever, RetrievalChain
+from chat_models.model import Model
+from typing import List, Any, Optional
 from contextlib import asynccontextmanager
 # from SingleAgent import SingleAgent
-from source import options, generator, idregister
+from source import options, generator
 from sql_app.Router import router, TokenVerificationMiddleware
 
 # model: SingleAgent
 document_retriever: DocumentRetriever
-new_retriever_chain: RetrievalChain
-retrieval_chain: Runnable
-chat_history: List[Any]
+# new_retriever_chain: RetrievalChain
+# retrieval_chain: Runnable
+# chat_history: List[Any]
+# zhipuai_model: Model
+# openai_model: Model
+# sparkllm_model: Model
 
 
 @asynccontextmanager
@@ -26,33 +31,44 @@ async def lifespan(app: FastAPI):
     # Load the ML model
     # global: model
     global document_retriever
-    global new_retriever_chain
-    global retrieval_chain
-    global chat_history
+    # global new_retriever_chain
+    # global retrieval_chain
+    # global chat_history
+    # global zhipuai_model
+    # global openai_model
+    # global sparkllm_model
     print("lifespan: loading...")
     # 这样的话没法多线程，理论上应该在创建新连接时对于每个新连接创建新model
     # model = SingleAgent()
     document_retriever = DocumentRetriever()
-    new_retriever_chain = RetrievalChain(document_retriever)
-    retrieval_chain = new_retriever_chain.chat()
-    chat_history = []
+    # new_retriever_chain = RetrievalChain(document_retriever)  # RetrievalChain类 包含DocumentRetriever类的实例
+    # retrieval_chain = new_retriever_chain.chat()  # Runnable
+    # chat_history = []
+
+    # initialize chat models
+    # zhipuai_model = Model("ZhipuAI")
+    # openai_model = Model("OpenAI")
+    # sparkllm_model = Model("SparkLLM")
+
+    # 注册路由
+    app.include_router(router)
     yield
     # Clean up the ML models and release the resources
     print("lifespan:stopping...")
 
 
-app = FastAPI(lifespan=lifespan)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # 替换为你的客户端域名
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-# 注册路由
-app.include_router(router)
-# 添加中间件到FastAPI应用
-app.add_middleware(TokenVerificationMiddleware)
+middleware = [
+    Middleware(CORSMiddleware,
+        allow_origins=["*"],  # 替换为客户端域名
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"]
+    ),
+    Middleware(TokenVerificationMiddleware),
+]
+
+app = FastAPI(lifespan=lifespan, middleware=middleware)
+
 
 
 @app.get("/")
@@ -60,7 +76,7 @@ async def root():
     return {"message": "Hello World"}
 
 
-# 前端应该要传给后端question和自身id，apikey，id用于确定询问者身份和对话编号（比如一个人可以开启多个对话），apikey用于验证是否有权限对话
+# ask路由用于直接和大模型对话，不通过检索链和Agent
 @app.post("/ask")
 async def ask_question(request: Request):
     try:
@@ -79,9 +95,31 @@ async def ask_question(request: Request):
         print(f"An exception occurred: {e}")
 
 
+# chat路由通过检索链实现，目前效果最好
+# 需要传入query参数代表问题，chat_model参数代表选取模型，chat_id可选参数代表会话id用于读取历史记录
+# 默认的chat_model为ZhipuAI，有效的参数为ZhipuAI，OpenAI，SparkLLM和接下来会添加的本地大模型
+# 如果传入的字符参数不属于上述四种则默认为ZhipuAI
+# 通过chat_id来寻找对话历史，**后续会在该路由上加上token验证**
 @app.get("/chat")
-async def retrieval_astream(query: str = "你是谁"):
+async def retrieval_astream(query: str = "你是谁", chat_model: str = "ZhipuAI", chat_id: Optional[int] = None):
     try:
+        # 读取历史记录
+        if chat_id:
+            # 在这里调用函数检索具体历史记录
+            history = []  # 修改此处，给history赋值
+            print("loading chat history")
+        else:
+            history = []  # 未传入chat_id参数，将不会有记忆
+
+        # 读取模型
+        model: Model = Model(chat_model)
+
+        # 生成检索链
+        # RetrievalChain类 包含DocumentRetriever类的实例
+        new_retriever_chain = RetrievalChain(document_retriever=document_retriever, model=model)
+        # Runnable
+        retrieval_chain = new_retriever_chain.chat()
+
         human_message: str = query
         if not human_message:
             return JSONResponse({'error': 'No question provided'}, status_code=400)
@@ -89,7 +127,7 @@ async def retrieval_astream(query: str = "你是谁"):
         async def retrieval_predict():
             ai_message: str = ""
             response_iter = retrieval_chain.astream({
-                "chat_history": chat_history,
+                "chat_history": history,
                 "input": human_message
             })
             async for chunk in response_iter:
@@ -104,8 +142,10 @@ async def retrieval_astream(query: str = "你是谁"):
                         json_data = json.dumps(js_data, ensure_ascii=False)
                         yield f"data: {json_data}\n\n"
 
-            chat_history.append(HumanMessage(content=human_message))
-            chat_history.append(AIMessage(content=ai_message))
+            history.append(HumanMessage(content=human_message))
+            history.append(AIMessage(content=ai_message))
+            # 在此将history写回Redis
+            # 写回过程可能比较耗时 最好能异步或挪到其他地方执行？
             json_data = json.dumps({"message": 'done'})
             yield f"data: {json_data}\n\n"  # 按照SSE格式发送数据
 

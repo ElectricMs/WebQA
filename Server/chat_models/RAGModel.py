@@ -37,7 +37,7 @@ class RAGModel:
 
     # vector = FAISS.from_documents(documents=documents, embedding=embeddings)
     print("start loading vector...")
-    vector = FAISS.load_local("./vectors_bin", embeddings, allow_dangerous_deserialization=True)
+    vector = FAISS.load_local("../vectors_bin", embeddings, allow_dangerous_deserialization=True)
     print(vector)
 
     # 创建一个向量检索器实例
