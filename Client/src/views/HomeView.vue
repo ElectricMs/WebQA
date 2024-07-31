@@ -2,9 +2,7 @@
   <div class="home">
     <div class="home-left">
       <div class="nev">
-       <!-- <button style="width: 50px;" @click="bye">bey</button> -->
        <button class='btn' @click="newtalk">新建对话</button>
-       <!-- <my-button @click="newtalk">新建对话</my-button> -->
        <br>
        <h4 class="text">历史记录</h4>
        <div class="ul_his">
@@ -188,7 +186,11 @@ export default {
         let BearMessage = sseMessage;
 
         // 创建一个新的 EventSource 实例(每次后端发来消息即可收到)
+<<<<<<< Updated upstream
         this.eventSource = new EventSource('http://127.0.0.1:5000/chat_stream?query=' + keyword);
+=======
+        this.eventSource = new EventSource('http://127.0.0.1:8000/chat?query=' + keyword);
+>>>>>>> Stashed changes
         // 设置消息事件监听器
         this.eventSource.onmessage = (event) => {
           try {
@@ -275,7 +277,11 @@ export default {
         }
       }
   }
-   
+  //每次加载重构新对话
+  // this.his_num += 1;
+  // this.tags.push({ name:'', id:this.his_num , his : "chatHistory" + this.his_num});
+  // this.his_choose = tag.his 
+  // this.messages = [];
   },
   updated() {
     // if (this.tags !== null && this.messages !== null){

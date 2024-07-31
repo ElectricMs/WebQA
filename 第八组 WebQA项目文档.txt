@@ -1,0 +1,186 @@
+一、项目规划与需求分析
+1.项目目标：
+基于langchain框架，按照正规的LLM应用的开发流程，实现一个带有前端Web界面的，拥有历史记录对话功能的智能客服系统。
+
+2.核心功能：
+本项目主要应用于帮助人们了解天津生活的相关信息，包括天津最近的天气情况、旅游景点和学校信息等内容。用户在与我们智能客服对话的过程中，不仅能够了解天津民众们经常关注的生活小事（天气、买房、工资、升学），还能够知道天津本地的许多交通站点、休闲景点，以及网友们对于这些地方（设施）的评价或攻略等详细信息。
+
+3.项目的技术架构和工具
+
+（1）框架：Langchain
+（2）Embedding模型：M3E
+（3）向量数据库:FAISS
+（4）大模型：智谱清言、讯飞星火
+（5）前后端：FastAPI+VUE
+
+二、数据准备与向量数据库的构建
+
+1.从网络上获取项目需要的相关信息
+我们通过Python的爬虫技术从天津本地宝公众号等其他网络渠道中爬取信息，汇总于200余个txt文档中。
+
+2.对获得到的文档进行初步处理
+首先，我们要使用 LangChain的TextLoader文档加载器来加载我们收集到的txt文档。
+然后，我们需要导入RecursiveCharacterTextSplitter对读取的文本进行切分，将较长的文本切分为较小的文本，这时一段文本就是一个单位的知识。
+
+2.将文档词向量化并建立索引
+使用M3E的文本嵌入(Embeddings)技术对分割后的文档进行向量化，使语义相似的文本片段具有接近的向量表示。
+然后，构造每个文档的FAISS对象，完成索引(index) 的创建。利用向量数据库对各文档片段进行索引，可以实现快速检索。（vector = FAISS.from_documents(documents=documents, embedding=embeddings)）
+
+3.将所有向量化后的文档导入一个FAISS库
+vector.save_local("./faiss/vectors_bin")，通过此方法可以将向量数据库vectors_bin存储到本地，
+项目的后端运行时，只需加载向量数据库vectors_bin，便可以获得全部数据。
+loaded_vector=FAISS.load_local("./faiss/vectors_bin",embeddings,allow_dangerous_deserialization=True)
+
+Langchain 集成了超过 30 个不同的向量数据库。FAISS数据库是一种用于高效相似性搜索和密集向量聚类的开源库，其在处理大规模向量数据时，搜索性能高效且易于集成和使用。
+将收集到的文档信息经过 Embedding 存入向量数据库，然后用户每一次提问和LLM回答的记录也会经过 Embedding，存入向量数据库中，以实现对历史记录的检索。
+
+
+三、大模型集成与 API 连接
+三个方法：
+1.在RAGModel.py文件中，我们实例化智谱清言模型
+
+    zhipu_chat_model = ChatZhipuAI(
+        temperature=0.2,
+        streaming=True,
+        # api_key="7bdc9df887559945f7c508bd61d0ed57.oexUZRGMwfxQbeQ5",
+    )
+    chat_model = zhipu_chat_model
+
+2.Server/RAGModel中补充必要的环境变量
+
+在Server中添加.env文件，
+在.env中配置
+ZHIPUAI_API_KEY
+SERPAPI_API_KEY
+
+3.或者选择通过 from dotenv import load_dotenv 引入外部环境变量文件
+在dotenv文件中配置环境变量（目前没实现）
+
+四、核心功能实现
+ 
+后端功能：（路由，运行流程，检索链）
+
+在main.py中定义了@app.get("/chat")接口，来接收前端发送的请求。
+（原本是定义了@app.get("/agent")接口,来接收前端发送的请求，此接口通过调用SingleAgent.py中 generate_answer方法，进而调用Agent，但是我们在进行测试的过程中发现，使用Agent的回复效果不理想。
+
+以下我们在发现此问题后，进行的问题总结及设想的改进方法。
+1.回复时语言有时会乱掉，比如输入中文问题回复英文结果；
+2.有时候Agent不知道自己该不该调用工具，有时候它会回答不出来正常的问题；
+3.回答有时过慢，考虑改进回答结构（比如使用检索链，限制思考步数）；
+4.提示词工程，提高输出内容质量
+
+之后，我们选择了检索链来从检索数据库和历史记录
+retrieval_chain = create_retrieval_chain(history_text_retriever_chain, document_chain)
+
+
+后端程序运行的流程：
+运行main.py文件，程序先从头到尾运行，当程序运行到这个函数时
+if name == "__main__":
+    uvicorn.run("main:app", host="127.0.0.1", port=5000, reload=True)
+程序开始监听各个接口，等待前端发送请求。
+当控制台上显示这个信息时，代表后端启动成功。
+INFO:     Started server process [29848]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+
+
+前端功能：
+ （1）创建一个新EventSource 实例,来实现向后端发送请求
+this.eventSource = new EventSource('http://127.0.0.1:5000/chat?query=' + keyword);）
+
+（2）新建对话功能
+newtalk(){
+  this.his_num += 1;
+  this.tags.push({ name:'', id:this.his_num , his : "chatHistory" + this.his_num});
+},
+（3）选择和删除历史对话功能
+deletehistory(tag){
+  // this.his_num -= 1;
+  this.tags.splice(this.tags.indexOf(tag), 1);
+
+},
+
+history(tag){
+  this.his_choose = tag.his 
+  console.log(this.his_choose)
+  console.log(localStorage.getItem(this.his_choose))
+  try{
+    let chatHistory = localStorage.getItem(this.his_choose);
+    if (chatHistory === 'null' || chatHistory === null){
+      this.messages = [];
+      console.log("没有历史记录")
+      
+    }
+    else{
+      console.log(chatHistory);
+      this.messages = JSON.parse(chatHistory);
+
+    }
+    
+  }
+  catch(error){
+    console.log(error)
+  }
+  
+},
+
+
+(4)接收后端的信息并在前端流式输出文字功能
+// 设置消息事件监听器
+this.eventSource.onmessage = (event) => {
+  try {
+
+    //console.log(event.data);
+
+    const dataObject = JSON.parse(event.data);
+    if (dataObject.message === 'done') {
+      this.eventSource.close();
+      this.loading = false;
+    }
+    
+    if (dataObject.message != 'done') {
+      // 累加接收到的数据到 BearMessage.orgcontent 中
+      BearMessage.orgcontent += dataObject.message.toLocaleString();
+      BearMessage.orgcontent = BearMessage.orgcontent.replace(/\*\*\s*([^*]*?)\s*(:\s*)?\\/g, '**$1$****2**');
+     
+      BearMessage.content = this.md.render(BearMessage.orgcontent);
+    }
+    this.scrollToBottom();
+  } catch (e) {
+    console.error('Error parsing JSON:', e);
+  }
+};
+
+五、核心功能迭代优化
+（暂时只有一次版本迭代优化）
+
+六、前端与用户交互界面开发
+
+1.搭建前端界面，实现了ChatModel系统，用户输入信息、智能客服回答信息的界面。其中，在第二个界面还包含了，查看历史对话记录的功能，即用户可以通过点击不同的对话框，进入到不同的历史对话中去。
+
+2.界面的美化：通过设置个性化的颜色和字体、个性化的鼠标形状和小熊组件，大大提高了本次项目的美观性。
+
+3.LLM回答用户问题的时候，实现了流式输出，在屏幕上逐个地输出文字，提高了用户的观感。
+
+七、本次项目的人员分工
+
+王梓烨：项目前端开发，包括用户对话界面的开发，实现流式输出、历史记录功能，前后端交互的接口的实现。
+章梁煜：项目后端各种功能的开发，包括对话的并行处理、实现多个路由接口、对话功能的实现。
+郑恒：从微信公众号与政务公开网上爬取并提纯项目所需的数据，前后端功能测试。
+王昱栋：项目文档的撰写，将数据存储到本地FAISS数据库中，完成后端检索链的开发。
+
+八、测试、维护与持续改进
+
+问题1：在测试的过程中发现，前后端通信时会出现问题。在前端发送两次提问请求，前两次前后端可以正常通信，将结果返回到客户端。但是之后再提问时，前后端交互就出现了问题。具体报错信息为 
+raise SSEError(     | httpx_sse._exceptions.SSEError: Expected response header Content-Type to contain 'text/event-stream', got ''
+通过github，初步搜素此报错信息，目前调试发现可能是大模型的问题
+https://github.com/langchain-ai/langchain/issues/20737
+（备注：时好时坏，不过现阶段以及没有出现bug）
+
+问题2：在用Agent进行带有历史记录功能的检索时，经常会出现一些小问题，比如Agent无法正常调用工具（返回结果是Agent不知道结果），Agent容易自我发挥输出答案。
+目前的解决方法是：使用retrieval_chain = create_retrieval_chain(history_text_retriever_chain, document_chain)
+来代替Agent实现检索功能。
+
+
+
+

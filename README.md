@@ -5,3 +5,5 @@
 **请在Server/models下补充m3e-base-huggingface模型**
 
 **请在Server/RAGModel中补充必要的环境变量，或选择通过 from dotenv import load_dotenv 引入外部环境变量文件**
+
+**前端请自行下载（npm install）所需的模块**
